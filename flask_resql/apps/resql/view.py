@@ -1,0 +1,128 @@
+import datetime
+from typing import Optional
+
+from graphql.type.definition import (
+    GraphQLArgument,
+    GraphQLField,
+    GraphQLNonNull,
+    GraphQLObjectType,
+)
+from graphql.type.schema import GraphQLSchema
+from pydantic import BaseModel, constr
+
+from flask_resql.apps import resql as rs
+from flask_resql.apps.resql.router import GraphRouter
+from flask_resql.apps.resql.types import TTag, TCategory, TPost
+
+router = GraphRouter()
+
+
+@router.item("tag", output=TTag)
+def get_tag():
+    i = 1
+    return {"id": 1, "name": f"tag-{i}", "count": i}
+
+
+@router.list("tags", output=TTag)
+def list_tags():
+    return [{"id": 1, "name": f"tag-{i}", "count": i} for i in range(2, 10)]
+
+
+@router.list("categories", output=TCategory)
+def list_categories():
+    return [{"id": 1, "name": f"category-{i}", "count": i} for i in range(2, 5)]
+
+
+@router.item("category", output=TCategory)
+def list_categories():
+    return [{"id": 1, "name": f"category-{i}", "count": i} for i in range(2, 5)]
+
+
+class ParamsCreateTag(BaseModel):
+    name: constr(min_length=2, max_length=10)
+
+
+@router.mutation
+def create_tag(params: ParamsCreateTag):
+    print(params.name)
+
+
+class ParamsEditTag(BaseModel):
+    id: int
+    name: constr(min_length=2, max_length=10)
+
+
+@router.mutation
+def edit_tag(params: ParamsEditTag):
+    print(params.id)
+    print(params.name)
+
+
+class ParamsListArchive(BaseModel):
+    q: Optional[constr(min_length=2, max_length=10)]
+    date_from: Optional[datetime.date]
+    date_to: Optional[datetime.date]
+    page: int = 1
+    per_page: int = 10
+    created_at: Optional[datetime.datetime]
+    status: str
+
+
+@router.pagination("archive", output=TPost)
+def list_archive(params: ParamsListArchive):
+    return {
+        "items": [
+            {
+                "id": i,
+                "name": f"name {i}",
+                "content": f"content {i}",
+                "tags": [
+                    {"id": 1, "name": f"tag-{i}", "count": i} for i in range(i, 4)
+                ],
+            }
+            for i in range(params.per_page)
+        ],
+        "page": params.per_page,
+        "per_page": params.per_page,
+        "total": 1,
+        "pages": 100,
+    }
+
+
+TViewer = router.build_query("TViewer")
+
+QueryRootType = GraphQLObjectType(
+    name="QueryRoot",
+    fields={
+        "viewer": GraphQLField(
+            TViewer, resolve=lambda *_: TViewer
+        ),
+        # "thrower": GraphQLField(GraphQLNonNull(GraphQLString), resolve=resolve_raises),
+        "request": GraphQLField(
+            GraphQLNonNull(rs.String),
+            resolve=lambda obj, info: info.context["request"].args.get("q"),
+        ),
+        "context": GraphQLField(
+            GraphQLObjectType(
+                name="context",
+                fields={
+                    "session": GraphQLField(rs.String),
+                    "request": GraphQLField(
+                        GraphQLNonNull(rs.String),
+                        resolve=lambda obj, info: info.context["request"],
+                    ),
+                },
+            ),
+            resolve=lambda obj, info: info.context,
+        ),
+        "test": GraphQLField(
+            type_=rs.String,
+            args={"who": GraphQLArgument(rs.String)},
+            resolve=lambda obj, info, who="World": "Hello %s" % who,
+        ),
+    },
+)
+
+MutationRootType = router.build_mutation("MutationRoot")
+
+Schema = GraphQLSchema(QueryRootType, MutationRootType)
