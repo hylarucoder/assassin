@@ -53,8 +53,8 @@ class GraphRouter:
                 rs.ObjectType(
                     f"pagination_{name}",
                     fields={
-                        "page": create_field('page', rs.Int),
-                        "perPage": create_field('per_page', rs.Int),
+                        "page": create_field("page", rs.Int),
+                        "perPage": create_field("per_page", rs.Int),
                         "hasNextPage": create_field("per_page", rs.Int),
                         "items": create_field("items", GraphQLList(output)),
                     },

@@ -25,14 +25,10 @@ def default_encoder(obj):
 def json_encode(data: Union[Dict, List], pretty: bool = False) -> str:
     if not pretty:
         return orjson.dumps(
-            data,
-            option=orjson.OPT_PASSTHROUGH_DATETIME,
-            default=default_encoder
+            data, option=orjson.OPT_PASSTHROUGH_DATETIME, default=default_encoder
         ).decode()
     return orjson.dumps(
-        data,
-        option=orjson.OPT_PASSTHROUGH_DATETIME,
-        default=default_encoder
+        data, option=orjson.OPT_PASSTHROUGH_DATETIME, default=default_encoder
     ).decode()
 
 

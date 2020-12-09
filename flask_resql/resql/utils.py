@@ -40,13 +40,19 @@ def transform_validator_field(field_name, field_schema, required=False):
 
 
 def create_field(field_name: str, field_type, required=False):
-    return GraphQLField(field_type, resolve=lambda root, info: force_resolve_attr(root, field_name))
+    return GraphQLField(
+        field_type, resolve=lambda root, info: force_resolve_attr(root, field_name)
+    )
 
 
-def transform_serializer_field(field_name, field_schema, required=False, definitions=None):
+def transform_serializer_field(
+    field_name, field_schema, required=False, definitions=None
+):
     if field_schema.get("$ref", None):
         name = field_schema["$ref"].replace("#/definitions/", "")
-        return transform_serializer_model(field_name + f"{randint(1, 100)}", definitions[name])
+        return transform_serializer_model(
+            field_name + f"{randint(1, 100)}", definitions[name]
+        )
     if field_schema["type"] == "string":
         if field_schema.get("format", None) == "date":
             return create_field(field_name, rs.Date, required)
@@ -70,20 +76,14 @@ def transform_serializer_model(type_name, model_schema, calls=5):
 
     fields = {}
     for name, schema in properties.items():
-        fields[name] = transform_serializer_field(
-            name,
-            schema,
-            False,
-            definitions
-        )
-    return ObjectType(
-        type_name,
-        fields=fields,
-    )
+        fields[name] = transform_serializer_field(name, schema, False, definitions)
+    return ObjectType(type_name, fields=fields,)
 
 
 def gen_serialize_field(field_name: str, field_type):
-    return GraphQLField(field_type, resolve=lambda root, info: force_resolve_attr(root, field_name))
+    return GraphQLField(
+        field_type, resolve=lambda root, info: force_resolve_attr(root, field_name)
+    )
 
 
 def gen_args_from_params(name: str, params_type: BaseModel) -> GraphQLArgument:
@@ -95,5 +95,5 @@ def gen_args_from_params(name: str, params_type: BaseModel) -> GraphQLArgument:
             field_name, field_schema, field_name in required_field_names
         )
     return GraphQLArgument(
-        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields, ))
+        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields,))
     )

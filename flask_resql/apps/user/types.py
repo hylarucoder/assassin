@@ -1,9 +1,7 @@
 import datetime
 from enum import Enum
 
-from graphql import (
-    GraphQLEnumType,
-)
+from graphql import GraphQLEnumType
 from pydantic.main import BaseModel
 
 from flask_resql.resql import Serializer
