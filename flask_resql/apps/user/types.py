@@ -2,16 +2,19 @@ import datetime
 from enum import Enum
 
 from graphql import (
-    GraphQLField,
-    GraphQLString,
-    GraphQLInt,
     GraphQLEnumType,
 )
 from pydantic.main import BaseModel
 
-from flask_resql.resql import ObjectType
 from flask_resql.resql import Serializer
 from flask_resql.resql.utils import transform_serializer_model
+
+
+def object_type(cls):
+    schema = cls.schema()
+    obj_type = transform_serializer_model(cls.__name__, schema)
+    obj_type.__serializer__ = cls
+    return obj_type
 
 
 class PostStatus(Enum):
@@ -29,53 +32,28 @@ PostStatusEnum = GraphQLEnumType(
 )
 
 
-class CategorySerializer(Serializer):
+@object_type
+class TCategory(Serializer):
     id: str
     name: str
     count: int
 
 
-TCategory = ObjectType(
-    "Category",
-    fields={
-        "id": GraphQLField(GraphQLString),
-        "name": GraphQLField(GraphQLString),
-        "count": GraphQLField(GraphQLInt),
-    },
-)
-
-
-class TagSerializer(Serializer):
+@object_type
+class TTag(Serializer):
     id: str
     name: str
     count: int
 
 
-TTag = ObjectType(
-    "Tag",
-    fields={
-        "id": GraphQLField(GraphQLString),
-        "name": GraphQLField(GraphQLString),
-        "count": GraphQLField(GraphQLInt),
-    },
-)
-
-
-class TPostModel(BaseModel):
+@object_type
+class TPost(BaseModel):
     id: str
     name: str
-    category: CategorySerializer
+    category: TCategory.__serializer__
     # tags: List[TagSerializer]
     content: str
     status: str
     date: datetime.date
     created_at: datetime.datetime
     updated_at: datetime.datetime
-
-    @classmethod
-    def build_type(cls):
-        schema = cls.schema()
-        return transform_serializer_model("TPost", schema)
-
-
-TPost = TPostModel.build_type()
