@@ -1,7 +1,14 @@
 from random import randint
 from typing import Union, Dict, Any
 
-from graphql import GraphQLField, GraphQLInputField, GraphQLNonNull, GraphQLArgument, GraphQLEnumType
+from graphql import (
+    GraphQLField,
+    GraphQLInputField,
+    GraphQLNonNull,
+    GraphQLArgument,
+    GraphQLEnumType,
+    GraphQLList,
+)
 from pydantic.main import BaseModel
 
 from flask_resql import resql as rs
@@ -39,75 +46,58 @@ def transform_validator_field(field_name, field_schema, required=False):
     raise NotImplementedError
 
 
-def create_field(field_name: str, field_type, required=False):
-    return GraphQLField(
-        field_type, resolve=lambda root, info: force_resolve_attr(root, field_name)
-    )
-
-
-def transform_serializer_field(
-        path, name, schema, model_schema, required=False
-):
-    if schema.get("$ref", None):
-        # sub model
-        # enum
-        return transform_serializer_model(
-            f"{path}/{name}",
-            name,
-            schema,
-            model_schema,
+def create_field(field_name: str, field_type, required=False, use_list=False):
+    if not use_list:
+        return GraphQLField(
+            field_type, resolve=lambda root, info: force_resolve_attr(root, field_name)
         )
-    # if schema["type"] == "object":
-    #     pass
-    if schema["type"] == "string":
-        if schema.get("format", None) == "date":
-            return create_field(name, rs.Date, required)
-        if schema.get("format", None) == "date-time":
-            return create_field(name, rs.DateTime, required)
-        return create_field(name, rs.String, required)
-    if schema["type"] == "integer":
-        return create_field(name, rs.Int, required)
-    # if field_schema["type"] == "array":
-    #     return create_field(field_name, rs.Int, required)
-    """
-    if v["type"] == "integer"
-    # TODO: nested support
-    """
-    raise NotImplementedError
+    else:
+        return GraphQLField(
+            GraphQLList(field_type),
+            resolve=lambda root, info: force_resolve_attr(root, field_name),
+        )
 
 
-def transform_serializer_model(path, name, schema, model_schema=None):
-    # /
-    if not model_schema:
-        model_schema = schema
-    print("type->", name, model_schema)
+def transform_serializer_field(path, name, schema, model_schema):
+    # TODO: self ref
+    if schema.get("$ref", None):
+        type_name = schema["$ref"].replace("#/definitions/", "")
+        definitions = model_schema.get("definitions", {})
+        return transform_serializer_field(
+            f"{path}", name, definitions[type_name], model_schema,
+        )
+
+    required = True
     schema_type = schema.get("type", None)
     if schema_type == "object":
         properties = schema.get("properties", {})
         fields = {}
         for field_name, field_schema in properties.items():
             fields[field_name] = transform_serializer_field(
-                f"{path}/{field_name}",
-                field_name,
-                field_schema,
-                model_schema,
-                False
+                f"{path}/{field_name}", field_name, field_schema, model_schema,
             )
         return ObjectType(name, fields=fields, )
-    if schema.get("enum", None):
-        type_name = schema["$ref"].replace("#/definitions/", "")
-        # print(model_schema, "----><<><><")
-        # TODO: 可能需要吧 basemodel传递过来？
-        return GraphQLField(
-            GraphQLEnumType("EEnumasdasd", values=dict(zip(model_schema["enum"], model_schema["enum"]))))
-    # ref
-    # sub model
-    # enum
-    print("--111-->", schema)
 
-    type_name = schema["$ref"].replace("#/definitions/", "")
-    definitions = model_schema.get("definitions", {})
-    return transform_serializer_model(path, name, definitions[type_name], model_schema=model_schema)
+    print("path->", path)
+    if schema.get("enum", None):
+        return GraphQLField(
+            GraphQLEnumType(
+                f"{name}_{randint(1, 200)}",
+                values=dict(zip(schema["enum"], schema["enum"])),
+            )
+        )
+    if schema_type == "string":
+        if schema.get("format", None) == "date":
+            return create_field(name, rs.Date, required)
+        if schema.get("format", None) == "date-time":
+            return create_field(name, rs.DateTime, required)
+        return create_field(name, rs.String, required)
+    if schema_type == "integer":
+        return create_field(name, rs.Int, required)
+    # if schema_type == "array":
+    #     return transform_serializer_field(f"{path}/{name}", name, schema, model_schema, use_list=True)
+
+    raise NotImplementedError
 
 
 def gen_serialize_field(field_name: str, field_type):

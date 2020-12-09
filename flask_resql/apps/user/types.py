@@ -1,16 +1,18 @@
 import datetime
 from enum import Enum
+from typing import List
 
-from graphql import GraphQLEnumType
 from pydantic.main import BaseModel
 
 from flask_resql.resql import Serializer
-from flask_resql.resql.utils import transform_serializer_model
+from flask_resql.resql.utils import transform_serializer_field
 
 
 def object_type(cls):
     schema = cls.schema()
-    obj_type = transform_serializer_model("/", cls.__name__, schema)
+    obj_type = transform_serializer_field(
+        f"/{cls.__name__}", cls.__name__, schema, model_schema=schema
+    )
     obj_type.__serializer__ = cls
     return obj_type
 
@@ -23,11 +25,6 @@ class CategoryStatusEnum(str, Enum):
     @property
     def desc(self):
         return "TLDR"
-
-
-# EnumCategoryStatus = GraphQLEnumType(
-#     "EnumCategoryStatus", CategoryStatusEnum, description="One of the films in the Star Wars Trilogy"
-# )
 
 
 @object_type
@@ -50,9 +47,10 @@ class TPost(BaseModel):
     id: str
     name: str
     category: TCategory.__serializer__
-    # tags: List[TagSerializer]
+    # tags: List[TTag.__serializer__]  # TODO: dirty, polish later
     content: str
     status: str
     date: datetime.date
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    # keywords: List[str]

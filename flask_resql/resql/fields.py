@@ -12,16 +12,9 @@ from graphql import (
     GraphQLInputFieldMap,
     InputObjectTypeDefinitionNode,
     InputObjectTypeExtensionNode,
-    GraphQLArgumentMap,
-    FieldDefinitionNode,
 )
 from graphql.pyutils import snake_to_camel
-from graphql.type.definition import (
-    GraphQLInputFieldOutType,
-    GraphQLField,
-    GraphQLOutputType,
-    GraphQLFieldResolver,
-)
+from graphql.type.definition import GraphQLInputFieldOutType
 
 
 class ObjectType(GraphQLObjectType):
@@ -71,28 +64,4 @@ class InputObjectType(GraphQLInputObjectType):
             extensions,
             ast_node,
             extension_ast_nodes,
-        )
-
-
-class Field(GraphQLField):
-    def __init__(
-        self,
-        type_: GraphQLOutputType,
-        args: Optional[GraphQLArgumentMap] = None,
-        resolve: Optional[GraphQLFieldResolver] = None,
-        subscribe: Optional["GraphQLFieldResolver"] = None,
-        description: Optional[str] = None,
-        deprecation_reason: Optional[str] = None,
-        extensions: Optional[Dict[str, Any]] = None,
-        ast_node: Optional[FieldDefinitionNode] = None,
-    ) -> None:
-        super().__init__(
-            type_,
-            args,
-            resolve,
-            subscribe,
-            description,
-            deprecation_reason,
-            extensions,
-            ast_node,
         )
