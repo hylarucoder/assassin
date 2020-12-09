@@ -63,6 +63,14 @@ DateTime = gql.GraphQLScalarType(
     parse_literal=parse,
 )
 
+Time = gql.GraphQLScalarType(
+    name="Time",
+    description="Time",
+    serialize=serialize_date,
+    parse_value=coerce_date,
+    parse_literal=parse_date,
+)
+
 Mobile = gql.GraphQLScalarType(
     name="Mobile",
     description="Mobile",
