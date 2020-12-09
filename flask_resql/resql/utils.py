@@ -4,8 +4,8 @@ from typing import Union, Dict, Any
 from graphql import GraphQLField, GraphQLInputField, GraphQLNonNull, GraphQLArgument
 from pydantic.main import BaseModel
 
-from flask_resql.apps import resql as rs
-from flask_resql.apps.resql import InputObjectType, ObjectType
+from flask_resql import resql as rs
+from flask_resql.resql import InputObjectType, ObjectType
 
 
 def force_resolve_attr(obj: Union[Dict, Any], name: str):

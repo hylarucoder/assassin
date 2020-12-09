@@ -9,8 +9,8 @@ from graphql.type.definition import (
 from graphql.type.schema import GraphQLSchema
 from pydantic import BaseModel, constr
 
-from flask_resql.apps import resql as rs
-from flask_resql.apps.resql.router import GraphRouter
+from flask_resql import resql as rs
+from flask_resql.resql.router import GraphRouter
 from flask_resql.apps.user.types import TTag, TCategory, TPost
 
 router = GraphRouter()

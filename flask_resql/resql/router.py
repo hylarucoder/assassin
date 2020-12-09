@@ -7,8 +7,8 @@ from graphql import (
     GraphQLList,
 )
 
-import flask_resql.apps.resql as rs
-from flask_resql.apps.resql.utils import gen_args_from_params, create_field
+import flask_resql.resql as rs
+from flask_resql.resql import gen_args_from_params, create_field
 
 
 def get_typed_signature(call: Callable) -> inspect.Signature:

@@ -1,6 +1,5 @@
 import datetime
 from enum import Enum
-from typing import List
 
 from graphql import (
     GraphQLField,
@@ -10,9 +9,9 @@ from graphql import (
 )
 from pydantic.main import BaseModel
 
-from flask_resql.apps.resql import ObjectType
-from flask_resql.apps.resql.serializer import Serializer
-from flask_resql.apps.resql.utils import transform_serializer_model
+from flask_resql.resql import ObjectType
+from flask_resql.resql import Serializer
+from flask_resql.resql.utils import transform_serializer_model
 
 
 class PostStatus(Enum):
