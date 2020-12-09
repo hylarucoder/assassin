@@ -2,4 +2,4 @@ from .scalars import ID, Int, Float, String, Boolean, Currency, Date, DateTime, 
 from .fields import ObjectType, InputObjectType
 from .serializer import Serializer
 from .validator import Validator
-from .utils import gen_args_from_params, create_field
+from .utils import gen_args_from_params, create_scalar_field

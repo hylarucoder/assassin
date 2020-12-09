@@ -79,6 +79,7 @@ def list_archive(params: ParamsListArchive):
                 "content": f"content {i}",
                 "date": date,
                 "created_at": created_at,
+                "keywords": ["k1", "k2"],
                 "tags": [
                     {"id": 1, "name": f"tag-{i}", "count": i} for i in range(i, 4)
                 ],

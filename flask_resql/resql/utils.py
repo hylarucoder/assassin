@@ -46,7 +46,7 @@ def transform_validator_field(field_name, field_schema, required=False):
     raise NotImplementedError
 
 
-def create_field(field_name: str, field_type, required=False, use_list=False):
+def create_scalar_field(field_name: str, field_type, required=False, use_list=False):
     if not use_list:
         return GraphQLField(
             field_type, resolve=lambda root, info: force_resolve_attr(root, field_name)
@@ -58,7 +58,7 @@ def create_field(field_name: str, field_type, required=False, use_list=False):
         )
 
 
-def transform_serializer_field(path, name, schema, model_schema):
+def transform_serializer_field(path, name, schema, model_schema, use_list=False):
     # TODO: self ref
     if schema.get("$ref", None):
         type_name = schema["$ref"].replace("#/definitions/", "")
@@ -88,14 +88,14 @@ def transform_serializer_field(path, name, schema, model_schema):
         )
     if schema_type == "string":
         if schema.get("format", None) == "date":
-            return create_field(name, rs.Date, required)
+            return create_scalar_field(name, rs.Date, required, use_list=use_list)
         if schema.get("format", None) == "date-time":
-            return create_field(name, rs.DateTime, required)
-        return create_field(name, rs.String, required)
+            return create_scalar_field(name, rs.DateTime, required, use_list=use_list)
+        return create_scalar_field(name, rs.String, required, use_list=use_list)
     if schema_type == "integer":
-        return create_field(name, rs.Int, required)
-    # if schema_type == "array":
-    #     return transform_serializer_field(f"{path}/{name}", name, schema, model_schema, use_list=True)
+        return create_scalar_field(name, rs.Int, required, use_list=use_list)
+    if schema_type == "array":
+        return transform_serializer_field(f"{path}", name, schema["items"], model_schema, use_list=True)
 
     raise NotImplementedError
 

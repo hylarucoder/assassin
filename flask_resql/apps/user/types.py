@@ -53,4 +53,4 @@ class TPost(BaseModel):
     date: datetime.date
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    # keywords: List[str]
+    keywords: List[str]

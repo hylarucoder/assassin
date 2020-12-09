@@ -6,7 +6,7 @@ from graphql import (
 )
 
 import flask_resql.resql as rs
-from flask_resql.resql import create_field
+from flask_resql.resql import create_scalar_field
 from flask_resql.resql.inspect import parse_resolver
 
 
@@ -53,10 +53,10 @@ class GraphRouter:
                 rs.ObjectType(
                     f"pagination_{name}",
                     fields={
-                        "page": create_field("page", rs.Int),
-                        "perPage": create_field("per_page", rs.Int),
-                        "hasNextPage": create_field("per_page", rs.Int),
-                        "items": create_field("items", GraphQLList(output)),
+                        "page": create_scalar_field("page", rs.Int),
+                        "perPage": create_scalar_field("per_page", rs.Int),
+                        "hasNextPage": create_scalar_field("per_page", rs.Int),
+                        "items": create_scalar_field("items", GraphQLList(output)),
                     },
                 ),
                 args=resolver_result.get_pagination_args(),
