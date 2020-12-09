@@ -5,37 +5,10 @@ from typing import Callable, Any, Dict
 from graphql import (
     GraphQLField,
     GraphQLList,
-    GraphQLObjectType,
-    GraphQLArgument,
-    GraphQLNonNull,
-    GraphQLInputObjectType,
-    GraphQLInputField,
 )
 
 import flask_resql.apps.resql as rs
-
-
-def get_input_field(type_, required=False) -> GraphQLInputField:
-    if not required:
-        return GraphQLInputField(type_)
-    else:
-        return GraphQLInputField(GraphQLNonNull(type_))
-
-
-def gen_field(k, v, schema):
-    """
-    # TODO: nested support
-    """
-    required = k in schema.get("required", [])
-    if v["type"] == "string":
-        if v.get("format", None) == "date":
-            return get_input_field(rs.Date, required)
-        if v.get("format", None) == "date-time":
-            return get_input_field(rs.DateTime, required)
-        return get_input_field(rs.String, required)
-    if v["type"] == "integer":
-        return GraphQLInputField(rs.Int)
-    raise NotImplementedError
+from flask_resql.apps.resql.utils import gen_args_from_params, create_field
 
 
 def get_typed_signature(call: Callable) -> inspect.Signature:
@@ -66,7 +39,7 @@ class ResolverResult(typing.NamedTuple):
     has_root: bool
     has_info: bool
 
-    def get_item_kwargs(self):
+    def get_item_args(self):
         kwargs = {}
         has_id = self.parameters.get("id", False)
         if has_id:
@@ -77,39 +50,22 @@ class ResolverResult(typing.NamedTuple):
         self.append_params_if_possible(kwargs)
         return kwargs
 
-    def get_list_kwargs(self):
+    def get_list_args(self):
         kwargs = {}
         self.append_params_if_possible(kwargs)
         return kwargs
 
-    def get_pagination_kwargs(self):
-        return self.get_list_kwargs()
+    def get_pagination_args(self):
+        return self.get_list_args()
 
-    def get_mutation_arguments_kwargs(self):
-        kwargs = {}
-        has_params = self.parameters.get("params", False)
-        if has_params:
-            input_type = self.parameters["params"].annotation
-
-            class Arguments:
-                input = input_type(required=True)
-
-            kwargs["Arguments"] = Arguments
-        return kwargs
+    def get_mutation_args(self):
+        return self.get_list_args()
 
     def append_params_if_possible(self, kwargs):
         has_params = self.parameters.get("params", False)
         if has_params:
             params_type = self.parameters["params"].annotation
-            schema = params_type.schema()
-            fields = {
-                k: gen_field(k, v, schema) for k, v in schema["properties"].items()
-            }
-            kwargs["params"] = GraphQLArgument(
-                GraphQLNonNull(
-                    GraphQLInputObjectType(f"Params{self.name}", fields=fields, )
-                )
-            )
+            kwargs["params"] = gen_args_from_params(self.name, params_type)
 
 
 def parse_resolver(resolver_function, name):
@@ -155,10 +111,9 @@ class GraphRouter:
     def item(self, name, output):
         def decorate(resolver_function):
             resolver_result = parse_resolver(resolver_function, name)
-            extra_kwargs = resolver_result.get_item_kwargs()
             field = GraphQLField(
                 output,
-                args={**extra_kwargs},
+                args=resolver_result.get_item_args(),
                 resolve=resolver_result.resolver,
                 description=resolver_function.__doc__ or "",
             )
@@ -170,10 +125,9 @@ class GraphRouter:
     def list(self, name, output):
         def decorate(resolver_function):
             resolver_result = parse_resolver(resolver_function, name)
-            extra_kwargs = resolver_result.get_list_kwargs()
             field = GraphQLField(
                 GraphQLList(output),
-                args={**extra_kwargs},
+                args=resolver_result.get_list_args(),
                 resolve=resolver_result.resolver,
                 description=resolver_function.__doc__ or "nops",
             )
@@ -185,22 +139,21 @@ class GraphRouter:
     def pagination(self, name, output):
         def decorate(resolver_function):
             resolver_result = parse_resolver(resolver_function, name)
-            extra_kwargs = resolver_result.get_list_kwargs()
             field = GraphQLField(
-                GraphQLObjectType(
-                    f"Pagination{name}",
+                rs.ObjectType(
+                    f"pagination_{name}",
                     fields={
-                        "page": GraphQLField(rs.Int),
-                        "per_page": GraphQLField(rs.Int),
-                        "has_next_page": GraphQLField(rs.Int),
-                        "items": GraphQLField(GraphQLList(output)),
+                        "page": create_field('page', rs.Int),
+                        "perPage": create_field('per_page', rs.Int),
+                        "hasNextPage": create_field("per_page", rs.Int),
+                        "items": create_field("items", GraphQLList(output)),
                     },
                 ),
-                args={**extra_kwargs},
+                args=resolver_result.get_pagination_args(),
                 resolve=resolver_result.resolver,
                 description=resolver_function.__doc__ or "nops",
             )
-            self.query_fields[f"{name}"] = field
+            self.query_fields[name] = field
             return field
 
         return decorate
@@ -208,11 +161,9 @@ class GraphRouter:
     def mutation(self, name_or_fn, output=None):
         def decorate(resolver_function, name):
             resolver_result = parse_resolver(resolver_function, name)
-            extra_kwargs = resolver_result.get_list_kwargs()
-
             field = GraphQLField(
                 output or rs.Boolean,
-                args={**extra_kwargs},
+                args=resolver_result.get_mutation_args(),
                 resolve=resolver_result.resolver,
                 description=resolver_function.__doc__ or "nops",
             )
@@ -224,13 +175,13 @@ class GraphRouter:
         return lambda fn: decorate(fn, name_or_fn)
 
     def build_query(self, type_name):
-        return GraphQLObjectType(
+        return rs.ObjectType(
             name=type_name,
             fields={name: field for name, field in self.query_fields.items()},
         )
 
     def build_mutation(self, type_name):
-        return GraphQLObjectType(
+        return rs.ObjectType(
             name=type_name,
             fields={name: field for name, field in self.mutation_fields.items()},
         )

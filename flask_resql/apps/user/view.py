@@ -1,10 +1,9 @@
 import datetime
 from typing import Optional
 
+from graphql.pyutils import snake_to_camel
 from graphql.type.definition import (
-    GraphQLArgument,
     GraphQLField,
-    GraphQLNonNull,
     GraphQLObjectType,
 )
 from graphql.type.schema import GraphQLSchema
@@ -12,7 +11,7 @@ from pydantic import BaseModel, constr
 
 from flask_resql.apps import resql as rs
 from flask_resql.apps.resql.router import GraphRouter
-from flask_resql.apps.resql.types import TTag, TCategory, TPost
+from flask_resql.apps.user.types import TTag, TCategory, TPost
 
 router = GraphRouter()
 
@@ -70,12 +69,16 @@ class ParamsListArchive(BaseModel):
 
 @router.pagination("archive", output=TPost)
 def list_archive(params: ParamsListArchive):
+    date = datetime.date(2020, 12, 1)
+    created_at = datetime.datetime(2020, 12, 1)
     return {
         "items": [
             {
                 "id": i,
                 "name": f"name {i}",
                 "content": f"content {i}",
+                "date": date,
+                "created_at": created_at,
                 "tags": [
                     {"id": 1, "name": f"tag-{i}", "count": i} for i in range(i, 4)
                 ],
@@ -85,44 +88,21 @@ def list_archive(params: ParamsListArchive):
         "page": params.per_page,
         "per_page": params.per_page,
         "total": 1,
-        "pages": 100,
     }
 
 
-TViewer = router.build_query("TViewer")
+TViewer = router.build_query("t_viewer")
 
 QueryRootType = GraphQLObjectType(
     name="QueryRoot",
     fields={
-        "viewer": GraphQLField(
-            TViewer, resolve=lambda *_: TViewer
-        ),
-        # "thrower": GraphQLField(GraphQLNonNull(GraphQLString), resolve=resolve_raises),
-        "request": GraphQLField(
-            GraphQLNonNull(rs.String),
-            resolve=lambda obj, info: info.context["request"].args.get("q"),
-        ),
-        "context": GraphQLField(
-            GraphQLObjectType(
-                name="context",
-                fields={
-                    "session": GraphQLField(rs.String),
-                    "request": GraphQLField(
-                        GraphQLNonNull(rs.String),
-                        resolve=lambda obj, info: info.context["request"],
-                    ),
-                },
-            ),
-            resolve=lambda obj, info: info.context,
-        ),
-        "test": GraphQLField(
-            type_=rs.String,
-            args={"who": GraphQLArgument(rs.String)},
-            resolve=lambda obj, info, who="World": "Hello %s" % who,
+        "viewer": GraphQLField(TViewer, resolve=lambda *_: TViewer),
+        snake_to_camel("health_check", False): GraphQLField(
+            type_=rs.String, resolve=lambda *_: "schema load success"
         ),
     },
 )
 
-MutationRootType = router.build_mutation("MutationRoot")
+MutationRootType = router.build_mutation("mutation_root")
 
 Schema = GraphQLSchema(QueryRootType, MutationRootType)

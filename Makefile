@@ -25,3 +25,10 @@ flake8: ## flake8
 
 test: ## test
 	pytest 
+
+test-verbose: ## test
+	pytest -vv
+
+format: ## format
+	black ./flask_resql
+	black ./tests

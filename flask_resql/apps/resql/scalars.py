@@ -31,12 +31,28 @@ Currency = gql.GraphQLScalarType(
     parse_literal=parse,
 )
 
+
+def serialize_date(v):
+    print("serialize date", v)
+    return v
+
+
+def coerce_date(v):
+    print("coerce date", v)
+    return v
+
+
+def parse_date(v):
+    print("parse_date", v)
+    return v
+
+
 Date = gql.GraphQLScalarType(
     name="Date",
     description="Date",
-    serialize=serialize,
-    parse_value=coerce,
-    parse_literal=parse,
+    serialize=serialize_date,
+    parse_value=coerce_date,
+    parse_literal=parse_date,
 )
 
 DateTime = gql.GraphQLScalarType(
