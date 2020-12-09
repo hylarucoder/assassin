@@ -1,7 +1,7 @@
 from random import randint
 from typing import Union, Dict, Any
 
-from graphql import GraphQLField, GraphQLInputField, GraphQLNonNull, GraphQLArgument
+from graphql import GraphQLField, GraphQLInputField, GraphQLNonNull, GraphQLArgument, GraphQLEnumType
 from pydantic.main import BaseModel
 
 from flask_resql import resql as rs
@@ -46,21 +46,27 @@ def create_field(field_name: str, field_type, required=False):
 
 
 def transform_serializer_field(
-    field_name, field_schema, required=False, definitions=None
+        path, name, schema, model_schema, required=False
 ):
-    if field_schema.get("$ref", None):
-        name = field_schema["$ref"].replace("#/definitions/", "")
+    if schema.get("$ref", None):
+        # sub model
+        # enum
         return transform_serializer_model(
-            field_name + f"{randint(1, 100)}", definitions[name]
+            f"{path}/{name}",
+            name,
+            schema,
+            model_schema,
         )
-    if field_schema["type"] == "string":
-        if field_schema.get("format", None) == "date":
-            return create_field(field_name, rs.Date, required)
-        if field_schema.get("format", None) == "date-time":
-            return create_field(field_name, rs.DateTime, required)
-        return create_field(field_name, rs.String, required)
-    if field_schema["type"] == "integer":
-        return create_field(field_name, rs.Int, required)
+    # if schema["type"] == "object":
+    #     pass
+    if schema["type"] == "string":
+        if schema.get("format", None) == "date":
+            return create_field(name, rs.Date, required)
+        if schema.get("format", None) == "date-time":
+            return create_field(name, rs.DateTime, required)
+        return create_field(name, rs.String, required)
+    if schema["type"] == "integer":
+        return create_field(name, rs.Int, required)
     # if field_schema["type"] == "array":
     #     return create_field(field_name, rs.Int, required)
     """
@@ -70,14 +76,38 @@ def transform_serializer_field(
     raise NotImplementedError
 
 
-def transform_serializer_model(type_name, model_schema, calls=5):
-    properties = model_schema["properties"]
-    definitions = model_schema.get("definitions", {})
+def transform_serializer_model(path, name, schema, model_schema=None):
+    # /
+    if not model_schema:
+        model_schema = schema
+    print("type->", name, model_schema)
+    schema_type = schema.get("type", None)
+    if schema_type == "object":
+        properties = schema.get("properties", {})
+        fields = {}
+        for field_name, field_schema in properties.items():
+            fields[field_name] = transform_serializer_field(
+                f"{path}/{field_name}",
+                field_name,
+                field_schema,
+                model_schema,
+                False
+            )
+        return ObjectType(name, fields=fields, )
+    if schema.get("enum", None):
+        type_name = schema["$ref"].replace("#/definitions/", "")
+        # print(model_schema, "----><<><><")
+        # TODO: 可能需要吧 basemodel传递过来？
+        return GraphQLField(
+            GraphQLEnumType("EEnumasdasd", values=dict(zip(model_schema["enum"], model_schema["enum"]))))
+    # ref
+    # sub model
+    # enum
+    print("--111-->", schema)
 
-    fields = {}
-    for name, schema in properties.items():
-        fields[name] = transform_serializer_field(name, schema, False, definitions)
-    return ObjectType(type_name, fields=fields,)
+    type_name = schema["$ref"].replace("#/definitions/", "")
+    definitions = model_schema.get("definitions", {})
+    return transform_serializer_model(path, name, definitions[type_name], model_schema=model_schema)
 
 
 def gen_serialize_field(field_name: str, field_type):
@@ -95,5 +125,5 @@ def gen_args_from_params(name: str, params_type: BaseModel) -> GraphQLArgument:
             field_name, field_schema, field_name in required_field_names
         )
     return GraphQLArgument(
-        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields,))
+        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields, ))
     )
