@@ -16,10 +16,12 @@ RESTful Experience with GraphQL API
 
 - [ ] Better Validation Experience
 - [ ] More Field Support
-    - [ ] List Scalar
-    - [ ] List Field
-    - [ ] JSONField/AutoCamelJsonField
     - [X] EnumField
+    - [X] List Scalar
+    - [ ] List Field/Enum
+    - [ ] JSONField/AutoCamelJsonField
     - [ ] Union Field
-- [ ] More Unit Test
+    - [ ] Self Reference Field
+    - [ ] Limit Bi-Direction Fields
 - [ ] Hashed Name - No More Field Naming Collision, Maybe
+- [ ] More Unit Test
