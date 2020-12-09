@@ -7,11 +7,12 @@ from graphql.type.definition import (
     GraphQLObjectType,
 )
 from graphql.type.schema import GraphQLSchema
-from pydantic import BaseModel, constr
+from pydantic import constr
 
 from flask_resql import resql as rs
-from flask_resql.resql.router import GraphRouter
 from flask_resql.apps.user.types import TTag, TCategory, TPost
+from flask_resql.resql import Validator
+from flask_resql.resql.router import GraphRouter
 
 router = GraphRouter()
 
@@ -37,7 +38,7 @@ def list_categories():
     return [{"id": 1, "name": f"category-{i}", "count": i} for i in range(2, 5)]
 
 
-class ParamsCreateTag(BaseModel):
+class ParamsCreateTag(Validator):
     name: constr(min_length=2, max_length=10)
 
 
@@ -46,7 +47,7 @@ def create_tag(params: ParamsCreateTag):
     print(params.name)
 
 
-class ParamsEditTag(BaseModel):
+class ParamsEditTag(Validator):
     id: int
     name: constr(min_length=2, max_length=10)
 
@@ -57,7 +58,7 @@ def edit_tag(params: ParamsEditTag):
     print(params.name)
 
 
-class ParamsListArchive(BaseModel):
+class ParamsListArchive(Validator):
     q: Optional[constr(min_length=2, max_length=10)]
     date_from: Optional[datetime.date]
     date_to: Optional[datetime.date]

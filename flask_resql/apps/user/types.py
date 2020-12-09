@@ -2,8 +2,6 @@ import datetime
 from enum import Enum
 from typing import List
 
-from pydantic.main import BaseModel
-
 from flask_resql.resql import Serializer
 from flask_resql.resql.utils import transform_serializer_field
 
@@ -43,7 +41,7 @@ class TTag(Serializer):
 
 
 @object_type
-class TPost(BaseModel):
+class TPost(Serializer):
     id: str
     name: str
     category: TCategory.__serializer__
