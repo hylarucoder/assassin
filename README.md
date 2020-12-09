@@ -15,6 +15,7 @@ RESTful Experience with GraphQL API
 ## TODO List
 
 - [ ] Better Validation Experience
+- [ ] Documentation with Pydantic + GraphQL
 - [ ] More Field Support
     - [X] EnumField
     - [X] List Scalar
