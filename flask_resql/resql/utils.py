@@ -101,7 +101,9 @@ def transform_serializer_field(path, name, schema, parent_schema, global_schema)
             )
         if use_list:
             return GraphQLField(
-                GraphQLList(ObjectType(name, fields=fields, description=field_description)),
+                GraphQLList(
+                    ObjectType(name, fields=fields, description=field_description)
+                ),
                 resolve=get_simple_resolver(name),
                 description=description,
             )
@@ -111,7 +113,7 @@ def transform_serializer_field(path, name, schema, parent_schema, global_schema)
         field_type = GraphQLEnumType(
             f"{name}_{randint(1, 200)}",
             values=dict(zip(schema["enum"], schema["enum"])),
-            description=field_description
+            description=field_description,
         )
 
         return create_enum_field(name, field_type, use_list, description)
@@ -153,5 +155,5 @@ def gen_args_from_params(name: str, params_type: BaseModel) -> GraphQLArgument:
             field_name, field_schema, field_name in required_field_names
         )
     return GraphQLArgument(
-        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields, ))
+        GraphQLNonNull(InputObjectType(f"params_{name}", fields=fields,))
     )
