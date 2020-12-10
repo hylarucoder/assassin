@@ -28,6 +28,7 @@ voluptuous = "^0.11.7"
 pydantic = "^1.7.3"
 graphql-server = "^3.0.0-beta.3"
 orjson = "^3.4.6"
+devtools = "^0.6.1"
 
 
 [tool.poetry.dev-dependencies]

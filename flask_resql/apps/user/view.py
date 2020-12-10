@@ -80,6 +80,7 @@ def list_archive(params: ParamsListArchive):
                 "content": f"content {i}",
                 "date": date,
                 "created_at": created_at,
+                "category": {"id": i, "status": "DRAFT", "statuses": ["DRAFT"],},
                 "keywords": ["k1", "k2"],
                 "tags": [
                     {"id": 1, "name": f"tag-{i}", "count": i} for i in range(i, 4)
@@ -87,7 +88,7 @@ def list_archive(params: ParamsListArchive):
             }
             for i in range(params.per_page)
         ],
-        "page": params.per_page,
+        "page": params.page,
         "per_page": params.per_page,
         "total": 1,
     }

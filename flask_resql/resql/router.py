@@ -54,9 +54,9 @@ class GraphRouter:
                     f"pagination_{name}",
                     fields={
                         "page": create_scalar_field("page", rs.Int),
-                        "perPage": create_scalar_field("per_page", rs.Int),
-                        "hasNextPage": create_scalar_field("per_page", rs.Int),
-                        "items": create_scalar_field("items", GraphQLList(output)),
+                        "per_page": create_scalar_field("per_page", rs.Int),
+                        "has_next_page": create_scalar_field("per_page", rs.Int),
+                        "items": create_scalar_field("items", output, use_list=True),
                     },
                 ),
                 args=resolver_result.get_pagination_args(),

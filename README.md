@@ -15,11 +15,11 @@ RESTful Experience with GraphQL API
 ## TODO List
 
 - [ ] Better Validation Experience
-- [ ] Documentation with Pydantic + GraphQL
+- [x] Documentation with Pydantic + GraphQL
 - [ ] More Field Support
     - [X] EnumField
     - [X] List Scalar
-    - [ ] List Field/Enum
+    - [X] List Field/Enum
     - [ ] JSONField/AutoCamelJsonField
     - [ ] Union Field
     - [ ] Self Reference Field
